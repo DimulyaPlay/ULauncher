@@ -2,8 +2,7 @@ import subprocess
 import os
 import sys
 
-#  pyinstaller.exe --onefile --windowed .\ULauncher.py
-
+# pyinstaller.exe --onefile --windowed .\ULauncher.py
 
 def get_launcher_directory():
     """Получает директорию, в которой находится лаунчер, избегая временной папки."""
@@ -13,7 +12,6 @@ def get_launcher_directory():
     else:
         # При обычном запуске или режиме onedir
         return os.path.dirname(os.path.abspath(sys.argv[0]))
-
 
 def load_config():
     """Загружает конфигурацию из текстового файла, имя которого совпадает с именем исполняемого файла."""
@@ -35,17 +33,21 @@ def load_config():
         print(f"Конфигурационный файл {config_file} не найден.")
     return programs
 
-
 def run_programs(programs):
-    """Запускает программы с аргументами из конфигурации."""
+    """Запускает программы с аргументами из конфигурации, добавляет pause, если последний аргумент 'pause'."""
     for program_name, arguments in programs:
+        # Проверяем, нужен ли pause
+        if arguments and arguments[-1].lower() == "pause":
+            arguments = arguments[:-1]  # Удаляем 'pause' из аргументов
+            command = f'start cmd /c "{program_name} {" ".join(arguments)} & pause"'
+        else:
+            command = f'start "" "{program_name}" {" ".join(arguments)}'  # Без pause
+
         try:
-            command = [program_name] + arguments
-            subprocess.run(command, check=True)
-            print(f"Запущена программа: {program_name}")
+            subprocess.run(command, shell=True)
+            print(f"Запущена программа: {program_name} {'с паузой' if 'pause' in command else 'без паузы'}")
         except Exception as e:
             print(f"Ошибка при запуске {program_name}: {e}")
-
 
 def main():
     programs = load_config()
@@ -53,7 +55,6 @@ def main():
         run_programs(programs)
     else:
         print("Список программ для запуска пуст.")
-
 
 if __name__ == '__main__':
     main()
